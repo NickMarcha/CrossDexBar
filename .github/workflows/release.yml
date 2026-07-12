@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore CrossdexBar.slnx
+
+      - name: Test
+        run: dotnet test CrossdexBar.slnx -c Release --no-restore
+
+      - name: Derive version from tag
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Publish
+        run: >
+          dotnet publish src/CrossdexBar.App/CrossdexBar.App.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:DebugType=none
+          -p:Version=${{ env.VERSION }}
+          -o publish/${{ matrix.rid }}
+
+      - name: Remove bundled debug symbols
+        shell: bash
+        run: rm -f publish/${{ matrix.rid }}/*.pdb
+
+      - name: Archive (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $archive = "CrossdexBar-${{ env.VERSION }}-${{ matrix.rid }}.zip"
+          Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath $archive
+          echo "ARCHIVE_PATH=$archive" >> $env:GITHUB_ENV
+
+      - name: Archive (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          archive="CrossdexBar-${VERSION}-${{ matrix.rid }}.tar.gz"
+          tar czf "$archive" -C "publish/${{ matrix.rid }}" .
+          echo "ARCHIVE_PATH=$archive" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.rid }}
+          path: ${{ env.ARCHIVE_PATH }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/* \
+            --title "CrossdexBar $GITHUB_REF_NAME" \
+            --generate-notes

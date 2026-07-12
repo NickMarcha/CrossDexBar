@@ -4,6 +4,10 @@ A cross-platform (Windows + Linux) system-tray app that shows your AI coding-too
 
 It's a spiritual port of [CodexBar](https://github.com/steipete/CodexBar) (macOS) and [Win-CodexBar](https://github.com/Finesssee/Win-CodexBar) (Windows) into a single codebase that runs on both platforms, with a provider architecture designed so adding a new provider is a small, self-contained task.
 
+## Download
+
+Grab a self-contained build (no .NET install required) from the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases) — `win-x64` for Windows, `linux-x64` for any standard x86_64 Linux distro including CachyOS. Unzip/untar and run the executable directly. New releases are cut by pushing a `v*.*.*` tag (see `.github/workflows/release.yml`).
+
 ## How it works
 
 For most providers, CrossdexBar doesn't ask you for an API key at all — it reuses the session each tool's own official CLI/app already created when you signed in normally:
@@ -70,4 +74,5 @@ None of these providers have a documented API — every auth-file shape and endp
 
 - Grok has no confirmed usage-percentage source yet — see the doc comment on `GrokAuthFileStrategy` for what's been investigated (a gRPC-web billing endpoint that turned out not to carry usage data, and a promising `rest/rate-limits` JSON endpoint that wasn't confirmed end-to-end due to lack of a test account).
 - No automatic browser-cookie import (Chrome/Edge DPAPI decryption, Linux keyring handling) — Ollama's cookie field is manual-paste only, by design, since automatic decryption is the most fragile part of both reference apps.
-- No installers/packaging yet (winget, AUR, Flatpak) — `dotnet run` only for now.
+- No proper installers/distro packages yet (winget manifest, AUR `PKGBUILD`, Flatpak, `.deb`) — the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases) has generic self-contained `win-x64`/`linux-x64` archives (unzip and run), which covers CachyOS since it's a standard x86_64 Arch-based distro, but there's no start-menu/desktop-entry integration or auto-update.
+- Windows builds are unsigned — Windows will show an "unknown publisher" SmartScreen warning until Authenticode signing is set up.
