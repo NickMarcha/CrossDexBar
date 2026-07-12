@@ -86,7 +86,21 @@ public sealed class RefreshService : IDisposable
         if (TryGetThrottledOutcome(instance.InstanceId, out var throttled))
             return Task.FromResult(throttled);
 
-        return _inFlight.GetOrAdd(instance.InstanceId, _ => RunFetchAsync(instance, ct));
+        var task = _inFlight.GetOrAdd(instance.InstanceId, _ => RunFetchAsync(instance, ct));
+
+        // Removing the in-flight entry here — after GetOrAdd has definitely returned — instead of from
+        // inside RunFetchAsync's own body avoids a real race: a fetch strategy that never truly awaits
+        // anything (e.g. a NotSignedIn short-circuit after a plain File.Exists check) could let the whole
+        // method run synchronously inside GetOrAdd's factory callback, so a self-removal there could fire
+        // before GetOrAdd had actually inserted the entry — leaving a permanently-stuck completed task in
+        // _inFlight that freezes that instance's refreshes forever. The conditional remove (only if the
+        // dictionary still holds *this exact* task) guards against removing a newer task that already
+        // replaced this one by the time this one completes.
+        _ = task.ContinueWith(
+            _ => _inFlight.TryRemove(new KeyValuePair<Guid, Task<ProviderFetchOutcome>>(instance.InstanceId, task)),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+        return task;
     }
 
     private bool TryGetThrottledOutcome(Guid instanceId, out ProviderFetchOutcome outcome)
@@ -133,27 +147,12 @@ public sealed class RefreshService : IDisposable
 
     private async Task<ProviderFetchOutcome> RunFetchAsync(ProviderInstance instance, CancellationToken ct)
     {
-        // Force a real async suspension before doing any work. Without this, a fetch strategy that never
-        // awaits anything (e.g. a NotSignedIn short-circuit after a plain File.Exists check) lets this whole
-        // method — including the finally block's _inFlight.TryRemove below — run synchronously inside
-        // GetOrAdd's factory callback, racing ahead of GetOrAdd's own insert of this task into _inFlight.
-        // The remove then has nothing to remove, GetOrAdd inserts anyway, and the completed task is stuck in
-        // _inFlight forever — silently freezing that instance's refreshes for the rest of the process.
-        await Task.Yield();
-
-        try
-        {
-            var outcome = await FetchInstanceAsync(instance, ct);
-            _lastAttemptAt[instance.InstanceId] = _now();
-            UpdateRateLimitState(instance.InstanceId, outcome);
-            _latest[instance.InstanceId] = outcome;
-            InstanceRefreshed?.Invoke(this, new InstanceRefreshedEventArgs(instance.InstanceId, outcome));
-            return outcome;
-        }
-        finally
-        {
-            _inFlight.TryRemove(instance.InstanceId, out _);
-        }
+        var outcome = await FetchInstanceAsync(instance, ct);
+        _lastAttemptAt[instance.InstanceId] = _now();
+        UpdateRateLimitState(instance.InstanceId, outcome);
+        _latest[instance.InstanceId] = outcome;
+        InstanceRefreshed?.Invoke(this, new InstanceRefreshedEventArgs(instance.InstanceId, outcome));
+        return outcome;
     }
 
     private void UpdateRateLimitState(Guid instanceId, ProviderFetchOutcome outcome)
