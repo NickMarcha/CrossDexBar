@@ -52,10 +52,19 @@ Each provider is a `ProviderDescriptor` (id, display name, branding, the per-ins
 
 1. New project `src/CrossdexBar.Providers.<Name>/` referencing `CrossdexBar.Core`.
 2. A `<Name>Descriptor.cs` (id, branding, instance-settings schema) and one or more `IFetchStrategy` implementations.
-3. Register it in `App.axaml.cs`'s `ComposeServices()` (`_registry.Register(...)` + a line in the default-instance seeding).
-4. A matching test project mirroring an existing one (e.g. `CrossdexBar.Providers.Codex.Tests`).
+3. Register it in `App.axaml.cs`'s `ComposeServices()`: `_registry.Register(...)` **and** add it to the `SeedDefaultInstanceIfMissing(...)` chain. Easy to forget the second part — without it, the provider works fine for fresh installs (which seed every registered provider) but silently never appears for anyone with an existing `config.json`, since seeding only fills in providers missing from the file.
+4. A matching test project mirroring an existing one (e.g. `CrossdexBar.Providers.Codex.Tests`) — see "What we learned" below before assuming an API/file shape without a real test against it.
+5. If the provider needs a new NuGet package (especially anything with a native/crypto component), check `dotnet build` output for `NU1903` vulnerability warnings and pin a patched transitive version explicitly if needed — see the `SQLitePCLRaw.bundle_e_sqlite3` pin in `CrossdexBar.Providers.Cursor.csproj` for the pattern (Microsoft.Data.Sqlite pulled in a version with a real CVE by default).
 
 No reflection-based auto-discovery on purpose — the registered provider list is always just one file to read.
+
+## What we learned building this (read before touching provider code)
+
+None of these providers have a documented API — every auth-file shape and endpoint here was reverse-engineered from steipete/CodexBar (Swift, macOS) and Finesssee/Win-CodexBar (Rust, Windows), and every single one of our first-pass guesses turned out wrong in some detail once tested against a real account:
+
+- **Check both reference repos, not just one.** They sometimes take meaningfully different approaches for the same provider. Grok is the clearest example: CodexBar's Swift code relies on an interactive `grok agent stdio` JSON-RPC session (a capability this app doesn't have) with a cookie-based web fallback; Win-CodexBar's Rust code instead sends the same `auth.json` token as a Bearer header straight to a gRPC-web billing endpoint — a completely different, and initially more promising-looking, approach that only reference #2 revealed.
+- **Undocumented endpoints deserve a heuristic parser, a clean failure path, and nothing more.** Codex's `reset_at` field turned out to be an absolute Unix timestamp, not the "seconds remaining" duration the field name implied — wrong for weeks until caught by a live test. Grok's gRPC-web response, decoded by hand from real captured bytes, had reset-window timestamps and status flags but zero usage-percentage field anywhere in it — the endpoint we guessed at (`GetGrokCreditsConfig`) looks like it returns billing *configuration*, not consumption; a plain JSON REST endpoint (`grok.com/rest/rate-limits`, returning `remainingQueries`/`totalQueries`) looked far more promising but was never confirmed against a real subscription. When a scan finds nothing usable, return a clean typed `Failure`/`Unavailable` — never fabricate a number.
+- **A synchronous fetch strategy can permanently freeze an instance's refreshes.** `RefreshService.RunFetchAsync` used to remove itself from the in-flight-task dictionary inside the same synchronous call stack that `ConcurrentDictionary.GetOrAdd` uses to insert it — invisible as long as every strategy did real async I/O, but a strategy that short-circuits without ever truly awaiting (e.g. a `NotSignedIn` right after a `File.Exists` check) would let the removal race ahead of the insert, leaking a permanently-stuck completed task and silently freezing that instance forever. Fixed with one `await Task.Yield();` at the top of the method — see the comment there for the full mechanism. Caught only because a throttle test happened to call the same instance twice in a row with a fully synchronous fake strategy; worth remembering if this method ever gets "simplified."
 
 ## Known limitations
 
