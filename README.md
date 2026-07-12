@@ -13,7 +13,7 @@ For most providers, CrossdexBar doesn't ask you for an API key at all — it reu
 | **Codex** | `~/.codex/auth.json` (written by `codex login`) | Real session/weekly percentages |
 | **Claude** | `~/.claude/.credentials.json` (written by the `claude` CLI) | Real 5-hour/weekly percentages |
 | **Cursor** | Cursor.app's local `state.vscdb` session | Real plan usage percentage |
-| **Ollama** | A pasted API key, or a pasted browser `Cookie` header for real quota bars | Key alone only confirms it's valid; a cookie is needed for actual numbers (Ollama's API doesn't expose usage) |
+| **Ollama** | A pasted browser `Cookie` header from `ollama.com/settings` (Settings → Ollama → Edit) | Real, live-updating Session/Weekly percentages — this is the recommended setup. An API key alone works as a lesser fallback that only confirms the key is valid, since Ollama's API doesn't expose usage (only its website does) |
 | **Grok** | `~/.grok/auth.json` (written by `grok login`) | Identity/sign-in only for now — no confirmed source for a usage percentage yet (see `GrokAuthFileStrategy`'s doc comment for what's been tried) |
 
 No passwords or browser-cookie decryption — the only place you'd ever paste something is Ollama's optional cookie field (Settings → Ollama → Edit), and that's a plain string paste, not automatic browser access.
