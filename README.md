@@ -6,7 +6,13 @@ It's a spiritual port of [CodexBar](https://github.com/steipete/CodexBar) (macOS
 
 ## Download
 
-Grab a self-contained build (no .NET install required) from the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases) — `win-x64` for Windows, `linux-x64` for any standard x86_64 Linux distro including CachyOS. Unzip/untar and run the executable directly. New releases are cut by pushing a `v*.*.*` tag (see `.github/workflows/release.yml`).
+Grab a self-contained build (no .NET install required) from the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases) — `win-x64` for Windows, `linux-x64` for any standard x86_64 Linux distro including CachyOS. Unzip/untar and run the executable directly.
+
+### Releasing (maintainers)
+
+1. `git tag vX.Y.Z && git push origin vX.Y.Z` — pushing a `v*.*.*` tag is the only trigger; regular pushes to `main` don't release anything.
+2. `.github/workflows/release.yml` runs the full test suite on both `windows-latest` and `ubuntu-latest` first; a GitHub Release with both archives is only created if both pass.
+3. **Tags are immutable once pushed.** If a run fails, you can't fix the code and re-run the same tag — `gh run rerun --failed` replays the exact workflow YAML pinned to that tag's commit, so it won't pick up anything pushed to `main` afterward. Push a new patch tag instead. This isn't hypothetical: the first release attempt was `v0.1.0` (failed — a race condition in `RefreshService` that only reproduced on CI) → `v0.1.1` (failed — the `release` job never checked out the repo, so `gh release create --generate-notes` had no git history) → `v0.1.2` (succeeded). The first two tags still exist on GitHub with no release attached, since their runs failed before the `release` job ever ran.
 
 ## How it works
 
