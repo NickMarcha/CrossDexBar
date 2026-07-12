@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CrossdexBar.App.ViewModels"
+        xmlns:providers="using:CrossdexBar.Core.Providers"
+        x:Class="CrossdexBar.App.Views.AddInstanceDialog"
+        x:DataType="vm:AddInstanceDialogViewModel"
+        Title="Add account"
+        Width="360" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+  <StackPanel Margin="16" Spacing="10">
+    <StackPanel Spacing="4">
+      <TextBlock Text="Provider" />
+      <ComboBox ItemsSource="{Binding AvailableProviders}" SelectedItem="{Binding SelectedProvider}" HorizontalAlignment="Stretch">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="providers:ProviderDescriptor">
+            <TextBlock Text="{Binding DisplayName}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+    </StackPanel>
+
+    <StackPanel Spacing="4">
+      <TextBlock Text="Label" />
+      <TextBox Text="{Binding Label}" />
+    </StackPanel>
+
+    <ItemsControl ItemsSource="{Binding Fields}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:SettingFieldViewModel">
+          <StackPanel Spacing="4" Margin="0,0,0,6">
+            <TextBlock Text="{Binding Label}" />
+            <TextBox Text="{Binding Value}" PlaceholderText="{Binding Placeholder}" />
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button Content="Cancel" Click="OnCancelClicked" />
+      <Button Content="Add" Click="OnAddClicked" IsDefault="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>

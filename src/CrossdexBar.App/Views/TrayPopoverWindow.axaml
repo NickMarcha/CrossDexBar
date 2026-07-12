@@ -1,0 +1,80 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CrossdexBar.App.ViewModels"
+        x:Class="CrossdexBar.App.Views.TrayPopoverWindow"
+        x:DataType="vm:TrayPopoverViewModel"
+        Title="CrossdexBar"
+        Width="340"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowDecorations="None"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        Deactivated="OnDeactivated">
+  <Window.Styles>
+    <Style Selector="Button.icon-button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="4" />
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+    </Style>
+  </Window.Styles>
+  <Border Padding="12" CornerRadius="8" BorderThickness="1" BorderBrush="#33000000" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,8">
+        <TextBlock Grid.Column="0" Text="CrossdexBar" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Classes="icon-button" Content="{Binding ResetModeGlyph}" Command="{Binding ToggleResetModeCommand}" Margin="4,0" ToolTip.Tip="{Binding ResetModeTooltip}" />
+        <Button Grid.Column="2" Classes="icon-button" Content="⟳" Command="{Binding RefreshAllCommand}" Margin="4,0" ToolTip.Tip="Refresh all" />
+        <Button Grid.Column="3" Classes="icon-button" Content="⚙" Command="{Binding OpenSettingsCommand}" Margin="0,0,4,0" ToolTip.Tip="Settings" />
+        <Button Grid.Column="4" Classes="icon-button" Content="⏻" Command="{Binding QuitCommand}" ToolTip.Tip="Quit" />
+      </Grid>
+
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding Cards}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ProviderCardViewModel">
+              <Border Margin="0,0,0,8" Padding="10" CornerRadius="6" Background="#14000000">
+                <StackPanel Spacing="4">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Ellipse Grid.Column="0" Width="10" Height="10" Fill="{Binding BrandBrush}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Label}" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Classes="icon-button" Content="⟳" Command="{Binding RefreshCommand}" IsEnabled="{Binding !IsLoading}" />
+                  </Grid>
+
+                  <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="11" FontWeight="SemiBold" Foreground="{Binding StatusBrush}"
+                             IsVisible="{Binding !IsConnected}" />
+
+                  <StackPanel Spacing="2">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <TextBlock Grid.Column="0" Text="{Binding PrimaryLabel}" FontSize="11" Opacity="0.7" />
+                      <TextBlock Grid.Column="1" Text="{Binding PrimaryPercentText}" FontSize="11" FontWeight="SemiBold" Margin="6,0,0,0" />
+                      <TextBlock Grid.Column="2" Text="{Binding PrimaryResetText}" FontSize="11" Opacity="0.7" />
+                    </Grid>
+                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding PrimaryPercent}" Height="6" />
+                  </StackPanel>
+
+                  <StackPanel Spacing="2" IsVisible="{Binding HasSecondary}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <TextBlock Grid.Column="0" Text="{Binding SecondaryLabel}" FontSize="11" Opacity="0.7" />
+                      <TextBlock Grid.Column="1" Text="{Binding SecondaryPercentText}" FontSize="11" FontWeight="SemiBold" Margin="6,0,0,0" />
+                      <TextBlock Grid.Column="2" Text="{Binding SecondaryResetText}" FontSize="11" Opacity="0.7" />
+                    </Grid>
+                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding SecondaryPercent}" Height="6" />
+                  </StackPanel>
+
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Text="{Binding LastUpdatedText}" FontSize="10" Opacity="0.5" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding StatusBrush}"
+                               IsVisible="{Binding IsConnected}" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </DockPanel>
+  </Border>
+</Window>
