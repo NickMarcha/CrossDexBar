@@ -102,7 +102,7 @@ public sealed class CursorAppAuthStrategy : IFetchStrategy
         var resetsAt = DateTimeOffset.TryParse(summary!.BillingCycleEnd, out var parsed) ? parsed : (DateTimeOffset?)null;
 
         var snapshot = new UsageSnapshot(
-            new UsageWindow(usedPercent, resetsAt, "Plan"), null, DateTimeOffset.UtcNow, "app-auth");
+    new UsageWindow(usedPercent, resetsAt, "Plan"), null, null, DateTimeOffset.UtcNow, "app-auth");
         return new ProviderFetchOutcome.Success(snapshot);
     }
 

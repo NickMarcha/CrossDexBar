@@ -82,11 +82,29 @@ public sealed class ClaudeAuthFileStrategy : IFetchStrategy
         if (usage is null)
             return new ProviderFetchOutcome.Failure("Claude usage API response was empty or malformed.");
 
-        // Per CodexBar's mapping: five_hour is the session window; seven_day is the weekly window, and also
-        // becomes the primary window (with no secondary) when five_hour is absent or has no utilization yet.
         UsageWindow primary;
         UsageWindow? secondary = null;
-        if (usage.FiveHour is { Utilization: not null } fiveHour)
+        UsageWindow? tertiary = null;
+
+        var sessionLimit = usage.Limits?.FirstOrDefault(limit => string.Equals(limit.Kind, "session", StringComparison.OrdinalIgnoreCase));
+        var weeklyAllLimit = usage.Limits?.FirstOrDefault(limit => string.Equals(limit.Kind, "weekly_all", StringComparison.OrdinalIgnoreCase));
+        var weeklyScopedLimit = usage.Limits?.FirstOrDefault(limit => string.Equals(limit.Kind, "weekly_scoped", StringComparison.OrdinalIgnoreCase));
+
+        if (sessionLimit is { Percent: not null } session)
+        {
+            primary = ToUsageWindow(session, "Session");
+            if (weeklyAllLimit is { Percent: not null } weeklyAll)
+                secondary = ToUsageWindow(weeklyAll, "Weekly");
+            if (weeklyScopedLimit is { Percent: not null } weeklyScoped)
+                tertiary = ToUsageWindow(weeklyScoped, "Fable");
+        }
+        else if (weeklyAllLimit is { Percent: not null } weeklyAllOnly)
+        {
+            primary = ToUsageWindow(weeklyAllOnly, "Weekly");
+            if (weeklyScopedLimit is { Percent: not null } weeklyScoped)
+                tertiary = ToUsageWindow(weeklyScoped, "Fable");
+        }
+        else if (usage.FiveHour is { Utilization: not null } fiveHour)
         {
             primary = ToUsageWindow(fiveHour, "Session");
             if (usage.SevenDay is { Utilization: not null } sevenDay)
@@ -101,7 +119,7 @@ public sealed class ClaudeAuthFileStrategy : IFetchStrategy
             return new ProviderFetchOutcome.Failure("Claude usage API response did not include any usage windows.");
         }
 
-        return new ProviderFetchOutcome.Success(new UsageSnapshot(primary, secondary, DateTimeOffset.UtcNow, "auth-file"));
+        return new ProviderFetchOutcome.Success(new UsageSnapshot(primary, secondary, tertiary, DateTimeOffset.UtcNow, "auth-file"));
     }
 
     private static DateTimeOffset? ResolveRetryAfter(HttpResponseMessage response)
@@ -116,6 +134,11 @@ public sealed class ClaudeAuthFileStrategy : IFetchStrategy
 
     private static UsageWindow ToUsageWindow(ClaudeOAuthUsageWindow window, string label) => new(
         UsedPercent: window.Utilization!.Value,
+        ResetsAt: window.ResetsAt,
+        Label: label);
+
+    private static UsageWindow ToUsageWindow(ClaudeOAuthLimitWindow window, string label) => new(
+        UsedPercent: window.Percent!.Value,
         ResetsAt: window.ResetsAt,
         Label: label);
 

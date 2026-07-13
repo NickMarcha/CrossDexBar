@@ -12,6 +12,7 @@ public sealed record ProviderIdentity(
 public sealed record UsageSnapshot(
     UsageWindow Primary,
     UsageWindow? Secondary,
+    UsageWindow? Tertiary,
     DateTimeOffset UpdatedAt,
     string SourceLabel,
     ProviderIdentity? Identity = null);

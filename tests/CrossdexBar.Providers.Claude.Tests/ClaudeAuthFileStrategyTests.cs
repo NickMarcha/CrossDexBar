@@ -69,6 +69,7 @@ public class ClaudeAuthFileStrategyTests
         Assert.NotNull(success.Snapshot.Secondary);
         Assert.Equal(12.5, success.Snapshot.Secondary!.UsedPercent);
         Assert.Equal("Weekly", success.Snapshot.Secondary.Label);
+        Assert.Null(success.Snapshot.Tertiary);
     }
 
     [Fact]
@@ -89,6 +90,40 @@ public class ClaudeAuthFileStrategyTests
         Assert.Equal(8.0, success.Snapshot.Primary.UsedPercent);
         Assert.Equal("Weekly", success.Snapshot.Primary.Label);
         Assert.Null(success.Snapshot.Secondary);
+        Assert.Null(success.Snapshot.Tertiary);
+    }
+
+    [Fact]
+    public async Task FetchAsync_UsesLimitsAndMapsWeeklyScopedToTertiaryMeter()
+    {
+        using var home = new TempDirectory();
+        WriteDefaultCredentialsFile(home.Path, """{ "claudeAiOauth": { "accessToken": "abc123" } }""");
+        var http = new FakeHttpApi(_ =>
+        {
+            const string body = """
+                {
+                  "limits": [
+                    { "kind": "session", "percent": 66.0, "resets_at": "2026-07-13T04:19:59.945683+00:00" },
+                    { "kind": "weekly_all", "percent": 65.0, "resets_at": "2026-07-15T05:59:59.945715+00:00" },
+                    { "kind": "weekly_scoped", "percent": 8.0, "resets_at": "2026-07-15T05:59:59.946150+00:00" }
+                  ]
+                }
+                """;
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+        });
+        var context = CreateContext(home.Path, http);
+
+        var outcome = await new ClaudeAuthFileStrategy().FetchAsync(context, CancellationToken.None);
+
+        var success = Assert.IsType<ProviderFetchOutcome.Success>(outcome);
+        Assert.Equal(66.0, success.Snapshot.Primary.UsedPercent);
+        Assert.Equal("Session", success.Snapshot.Primary.Label);
+        Assert.NotNull(success.Snapshot.Secondary);
+        Assert.Equal(65.0, success.Snapshot.Secondary!.UsedPercent);
+        Assert.Equal("Weekly", success.Snapshot.Secondary.Label);
+        Assert.NotNull(success.Snapshot.Tertiary);
+        Assert.Equal(8.0, success.Snapshot.Tertiary!.UsedPercent);
+        Assert.Equal("Fable", success.Snapshot.Tertiary.Label);
     }
 
     [Fact]

@@ -26,12 +26,27 @@ internal sealed class ClaudeOAuthUsageResponse
 
     [JsonPropertyName("seven_day")]
     public ClaudeOAuthUsageWindow? SevenDay { get; set; }
+
+    [JsonPropertyName("limits")]
+    public List<ClaudeOAuthLimitWindow>? Limits { get; set; }
 }
 
 internal sealed class ClaudeOAuthUsageWindow
 {
     [JsonPropertyName("utilization")]
     public double? Utilization { get; set; }
+
+    [JsonPropertyName("resets_at")]
+    public DateTimeOffset? ResetsAt { get; set; }
+}
+
+internal sealed class ClaudeOAuthLimitWindow
+{
+    [JsonPropertyName("kind")]
+    public string? Kind { get; set; }
+
+    [JsonPropertyName("percent")]
+    public double? Percent { get; set; }
 
     [JsonPropertyName("resets_at")]
     public DateTimeOffset? ResetsAt { get; set; }

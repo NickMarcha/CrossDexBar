@@ -37,7 +37,7 @@ public class RefreshServiceTests
     [Fact]
     public async Task RefreshInstanceAsync_ReturnsSuccess_WhenStrategySucceeds()
     {
-        var snapshot = new UsageSnapshot(new UsageWindow(50, null, "Session"), null, DateTimeOffset.UtcNow, "fake");
+        var snapshot = new UsageSnapshot(new UsageWindow(50, null, "Session"), null, null, DateTimeOffset.UtcNow, "fake");
         var strategy = new FakeFetchStrategy((_, _) => Task.FromResult<ProviderFetchOutcome>(new ProviderFetchOutcome.Success(snapshot)));
         var registry = new ProviderRegistry();
         registry.Register(MakeDescriptor("test", strategy));
@@ -54,7 +54,7 @@ public class RefreshServiceTests
     [Fact]
     public async Task RefreshInstanceAsync_SkipsUnavailableStrategies_AndFallsThroughToNext()
     {
-        var snapshot = new UsageSnapshot(new UsageWindow(10, null, "Session"), null, DateTimeOffset.UtcNow, "fallback");
+        var snapshot = new UsageSnapshot(new UsageWindow(10, null, "Session"), null, null, DateTimeOffset.UtcNow, "fallback");
         var unavailable = new FakeFetchStrategy((_, _) => throw new InvalidOperationException("should not be called"), isAvailable: false);
         var fallback = new FakeFetchStrategy((_, _) => Task.FromResult<ProviderFetchOutcome>(new ProviderFetchOutcome.Success(snapshot)));
         var registry = new ProviderRegistry();
@@ -78,7 +78,7 @@ public class RefreshServiceTests
         {
             Interlocked.Increment(ref callCount);
             await gate.Task;
-            return new ProviderFetchOutcome.Success(new UsageSnapshot(new UsageWindow(1, null, "s"), null, DateTimeOffset.UtcNow, "src"));
+            return new ProviderFetchOutcome.Success(new UsageSnapshot(new UsageWindow(1, null, "s"), null, null, DateTimeOffset.UtcNow, "src"));
         });
         var registry = new ProviderRegistry();
         registry.Register(MakeDescriptor("test", strategy));
@@ -102,7 +102,7 @@ public class RefreshServiceTests
         {
             Interlocked.Increment(ref callCount);
             return Task.FromResult<ProviderFetchOutcome>(new ProviderFetchOutcome.Success(
-                new UsageSnapshot(new UsageWindow(1, null, "s"), null, DateTimeOffset.UtcNow, "src")));
+                new UsageSnapshot(new UsageWindow(1, null, "s"), null, null, DateTimeOffset.UtcNow, "src")));
         });
         var registry = new ProviderRegistry();
         registry.Register(MakeDescriptor("test", strategy));
@@ -125,7 +125,7 @@ public class RefreshServiceTests
         {
             Interlocked.Increment(ref callCount);
             return Task.FromResult<ProviderFetchOutcome>(new ProviderFetchOutcome.Success(
-                new UsageSnapshot(new UsageWindow(1, null, "s"), null, DateTimeOffset.UtcNow, "src")));
+                new UsageSnapshot(new UsageWindow(1, null, "s"), null, null, DateTimeOffset.UtcNow, "src")));
         });
         var registry = new ProviderRegistry();
         registry.Register(MakeDescriptor("test", strategy));
@@ -175,7 +175,7 @@ public class RefreshServiceTests
             var attempt = Interlocked.Increment(ref callCount);
             ProviderFetchOutcome outcome = attempt == 1
                 ? new ProviderFetchOutcome.Failure("rate limited", StatusCode: System.Net.HttpStatusCode.TooManyRequests, RetryAfter: retryAfter)
-                : new ProviderFetchOutcome.Success(new UsageSnapshot(new UsageWindow(1, null, "s"), null, DateTimeOffset.UtcNow, "src"));
+                : new ProviderFetchOutcome.Success(new UsageSnapshot(new UsageWindow(1, null, "s"), null, null, DateTimeOffset.UtcNow, "src"));
             return Task.FromResult(outcome);
         });
         var registry = new ProviderRegistry();

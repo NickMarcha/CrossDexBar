@@ -13,25 +13,32 @@ public sealed partial class ProviderCardViewModel : ViewModelBase
     private readonly ResetDisplayMode _resetDisplayMode;
     private DateTimeOffset? _primaryResetsAt;
     private DateTimeOffset? _secondaryResetsAt;
+    private DateTimeOffset? _tertiaryResetsAt;
 
-    public Guid InstanceId { get; }
-    public string Label { get; }
-    public IBrush BrandBrush { get; }
-
-    [ObservableProperty] private double _primaryPercent;
-    [ObservableProperty] private string _primaryPercentText = "";
-    [ObservableProperty] private string _primaryLabel = "Session";
-    [ObservableProperty] private string _primaryResetText = "";
     [ObservableProperty] private bool _hasSecondary;
     [ObservableProperty] private double _secondaryPercent;
     [ObservableProperty] private string _secondaryPercentText = "";
     [ObservableProperty] private string _secondaryLabel = "Weekly";
     [ObservableProperty] private string _secondaryResetText = "";
+
+    [ObservableProperty] private bool _hasTertiary;
+    [ObservableProperty] private double _tertiaryPercent;
+    [ObservableProperty] private string _tertiaryPercentText = "";
+    [ObservableProperty] private string _tertiaryLabel = "";
+    [ObservableProperty] private string _tertiaryResetText = "";
+
+    [ObservableProperty] private double _primaryPercent;
+    [ObservableProperty] private string _primaryPercentText = "";
+    [ObservableProperty] private string _primaryLabel = "Session";
+    [ObservableProperty] private string _primaryResetText = "";
     [ObservableProperty] private string _statusMessage = "Not refreshed yet";
     [ObservableProperty] private IBrush _statusBrush = Brushes.Gray;
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _lastUpdatedText = "Never refreshed";
+    public Guid InstanceId { get; }
+    public string Label { get; }
+    public IBrush BrandBrush { get; }
 
     public IAsyncRelayCommand RefreshCommand { get; }
 
@@ -89,6 +96,19 @@ public sealed partial class ProviderCardViewModel : ViewModelBase
                     _secondaryResetsAt = null;
                 }
 
+                HasTertiary = success.Snapshot.Tertiary is not null;
+                if (success.Snapshot.Tertiary is { } tertiary)
+                {
+                    TertiaryPercent = tertiary.UsedPercent;
+                    TertiaryPercentText = $"{tertiary.UsedPercent:0}% used";
+                    TertiaryLabel = tertiary.Label;
+                    _tertiaryResetsAt = tertiary.ResetsAt;
+                }
+                else
+                {
+                    _tertiaryResetsAt = null;
+                }
+
                 RefreshResetDisplay();
                 LastUpdatedText = $"Updated {success.Snapshot.UpdatedAt.ToLocalTime():t}";
                 break;
@@ -115,6 +135,7 @@ public sealed partial class ProviderCardViewModel : ViewModelBase
     {
         PrimaryResetText = FormatReset(_primaryResetsAt, _resetDisplayMode.ShowAbsolute);
         SecondaryResetText = FormatReset(_secondaryResetsAt, _resetDisplayMode.ShowAbsolute);
+        TertiaryResetText = FormatReset(_tertiaryResetsAt, _resetDisplayMode.ShowAbsolute);
     }
 
     private static string FormatReset(DateTimeOffset? resetsAt, bool showAbsolute)
@@ -131,7 +152,6 @@ public sealed partial class ProviderCardViewModel : ViewModelBase
 
         if (delta.TotalDays >= 1)
             return $"Resets in {(int)delta.TotalDays}d {delta.Hours}h";
-
         return delta.TotalHours >= 1
             ? $"Resets in {(int)delta.TotalHours}h {delta.Minutes}m"
             : $"Resets in {(int)delta.TotalMinutes}m";

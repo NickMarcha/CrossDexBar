@@ -92,7 +92,7 @@ public sealed class CodexAuthFileStrategy : IFetchStrategy
             return new ProviderFetchOutcome.Failure("Codex usage API response did not include rate-limit data.");
         }
 
-        var snapshot = new UsageSnapshot(primary, secondary, DateTimeOffset.UtcNow, "auth-file");
+        var snapshot = new UsageSnapshot(primary, secondary, null, DateTimeOffset.UtcNow, "auth-file");
         return new ProviderFetchOutcome.Success(snapshot);
     }
 

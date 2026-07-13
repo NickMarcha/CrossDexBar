@@ -70,6 +70,6 @@ public sealed class OllamaWebUsageStrategy : IFetchStrategy
             primary = new UsageWindow(weeklyBlock.UsedPercent, weeklyBlock.ResetsAt, "Weekly");
         }
 
-        return new ProviderFetchOutcome.Success(new UsageSnapshot(primary, secondary, DateTimeOffset.UtcNow, "web-cookie"));
+        return new ProviderFetchOutcome.Success(new UsageSnapshot(primary, secondary, null, DateTimeOffset.UtcNow, "web-cookie"));
     }
 }
