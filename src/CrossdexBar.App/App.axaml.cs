@@ -9,6 +9,7 @@ using CrossdexBar.Core.Host;
 using CrossdexBar.Core.Providers;
 using CrossdexBar.Core.Refresh;
 using CrossdexBar.Providers.Claude;
+using CrossdexBar.Providers.Copilot;
 using CrossdexBar.Providers.Codex;
 using CrossdexBar.Providers.Cursor;
 using CrossdexBar.Providers.Grok;
@@ -51,6 +52,7 @@ public partial class App : Application
         _registry = new ProviderRegistry();
         _registry.Register(CodexDescriptor.Descriptor);
         _registry.Register(ClaudeDescriptor.Descriptor);
+        _registry.Register(CopilotDescriptor.Descriptor);
         _registry.Register(CursorDescriptor.Descriptor);
         _registry.Register(GrokDescriptor.Descriptor);
         _registry.Register(OllamaDescriptor.Descriptor);
@@ -59,6 +61,7 @@ public partial class App : Application
         _instanceStore.Load();
         var seededDefault = SeedDefaultInstanceIfMissing("codex", "Codex")
             | SeedDefaultInstanceIfMissing("claude", "Claude")
+            | SeedDefaultInstanceIfMissing("copilot", "Copilot")
             | SeedDefaultInstanceIfMissing("cursor", "Cursor")
             | SeedDefaultInstanceIfMissing("grok", "Grok")
             | SeedDefaultInstanceIfMissing("ollama", "Ollama");

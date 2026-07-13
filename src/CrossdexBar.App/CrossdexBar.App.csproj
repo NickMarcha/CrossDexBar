@@ -28,6 +28,7 @@
     <ProjectReference Include="..\CrossdexBar.Core\CrossdexBar.Core.csproj" />
     <ProjectReference Include="..\CrossdexBar.Providers.Codex\CrossdexBar.Providers.Codex.csproj" />
     <ProjectReference Include="..\CrossdexBar.Providers.Claude\CrossdexBar.Providers.Claude.csproj" />
+    <ProjectReference Include="..\CrossdexBar.Providers.Copilot\CrossdexBar.Providers.Copilot.csproj" />
     <ProjectReference Include="..\CrossdexBar.Providers.Cursor\CrossdexBar.Providers.Cursor.csproj" />
     <ProjectReference Include="..\CrossdexBar.Providers.Grok\CrossdexBar.Providers.Grok.csproj" />
     <ProjectReference Include="..\CrossdexBar.Providers.Ollama\CrossdexBar.Providers.Ollama.csproj" />

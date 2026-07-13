@@ -3,6 +3,7 @@
     <Project Path="src/CrossdexBar.App/CrossdexBar.App.csproj" />
     <Project Path="src/CrossdexBar.Core/CrossdexBar.Core.csproj" />
     <Project Path="src/CrossdexBar.Providers.Claude/CrossdexBar.Providers.Claude.csproj" />
+    <Project Path="src/CrossdexBar.Providers.Copilot/CrossdexBar.Providers.Copilot.csproj" />
     <Project Path="src/CrossdexBar.Providers.Codex/CrossdexBar.Providers.Codex.csproj" />
     <Project Path="src/CrossdexBar.Providers.Cursor/CrossdexBar.Providers.Cursor.csproj" />
     <Project Path="src/CrossdexBar.Providers.Grok/CrossdexBar.Providers.Grok.csproj" />
@@ -11,6 +12,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/CrossdexBar.Core.Tests/CrossdexBar.Core.Tests.csproj" />
     <Project Path="tests/CrossdexBar.Providers.Claude.Tests/CrossdexBar.Providers.Claude.Tests.csproj" />
+    <Project Path="tests/CrossdexBar.Providers.Copilot.Tests/CrossdexBar.Providers.Copilot.Tests.csproj" />
     <Project Path="tests/CrossdexBar.Providers.Codex.Tests/CrossdexBar.Providers.Codex.Tests.csproj" />
     <Project Path="tests/CrossdexBar.Providers.Cursor.Tests/CrossdexBar.Providers.Cursor.Tests.csproj" />
     <Project Path="tests/CrossdexBar.Providers.Grok.Tests/CrossdexBar.Providers.Grok.Tests.csproj" />

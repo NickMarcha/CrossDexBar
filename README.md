@@ -1,6 +1,6 @@
 # CrossdexBar
 
-A cross-platform (Windows + Linux) system-tray app that shows your AI coding-tool usage — Codex, Claude, Cursor, Grok, and Ollama — at a glance, built with [Avalonia UI](https://avaloniaui.net/) and .NET.
+A cross-platform (Windows + Linux) system-tray app that shows your AI coding-tool usage — Codex, Claude, Copilot, Cursor, Grok, and Ollama — at a glance, built with [Avalonia UI](https://avaloniaui.net/) and .NET.
 
 It's a spiritual port of [CodexBar](https://github.com/steipete/CodexBar) (macOS) and [Win-CodexBar](https://github.com/Finesssee/Win-CodexBar) (Windows) into a single codebase that runs on both platforms, with a provider architecture designed so adding a new provider is a small, self-contained task.
 
@@ -22,6 +22,7 @@ For most providers, CrossdexBar doesn't ask you for an API key at all — it reu
 | --- | --- | --- |
 | **Codex** | `~/.codex/auth.json` (written by `codex login`) | Real session/weekly percentages |
 | **Claude** | `~/.claude/.credentials.json` (written by the `claude` CLI) | Real 5-hour/weekly percentages |
+| **Copilot** | Active GitHub CLI login (`gh auth token` → `api.github.com/copilot_internal/user`) | Real monthly quota usage percentages (e.g. premium interactions/chat/completions when quota-limited) |
 | **Cursor** | Cursor.app's local `state.vscdb` session | Real plan usage percentage |
 | **Ollama** | A pasted browser `Cookie` header from `ollama.com/settings` (Settings → Ollama → Edit) | Real, live-updating Session/Weekly percentages — this is the recommended setup. An API key alone works as a lesser fallback that only confirms the key is valid, since Ollama's API doesn't expose usage (only its website does) |
 | **Grok** | `~/.grok/auth.json` (written by `grok login`) | Identity/sign-in only for now — no confirmed source for a usage percentage yet (see `GrokAuthFileStrategy`'s doc comment for what's been tried) |
@@ -38,7 +39,7 @@ No passwords or browser-cookie decryption — the only place you'd ever paste so
 ```bash
 dotnet build CrossdexBar.slnx
 dotnet run --project src/CrossdexBar.App
-dotnet test CrossdexBar.slnx   # 52 tests across Core + one project per provider
+dotnet test CrossdexBar.slnx   # tests across Core + one project per provider
 ```
 
 Click the tray icon to open the usage popover. Right-click (or the ⚙ button) for Settings, where you can enable/disable providers, add multiple accounts of the same provider (e.g. two Codex logins), and edit per-instance settings like a custom credentials-file path or an Ollama cookie header.
