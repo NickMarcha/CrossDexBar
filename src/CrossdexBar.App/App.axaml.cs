@@ -107,7 +107,7 @@ public partial class App : Application
         var settingsItem = new NativeMenuItem("Settings...");
         settingsItem.Click += (_, _) => OpenSettings();
         var checkForUpdatesItem = new NativeMenuItem("Check for updates...");
-        checkForUpdatesItem.Click += (_, _) => _ = _updateService.CheckAndApplyAsync();
+        checkForUpdatesItem.Click += (_, _) => _ = CheckForUpdatesAsync();
         var quitItem = new NativeMenuItem("Quit");
         quitItem.Click += (_, _) => Quit();
         var menu = new NativeMenu { settingsItem, checkForUpdatesItem, quitItem };
@@ -200,6 +200,24 @@ public partial class App : Application
     {
         var dialog = new EditInstanceDialog { DataContext = new EditInstanceDialogViewModel(descriptor, instance) };
         return await dialog.ShowDialog<EditInstanceResult?>(owner);
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        var result = await _updateService.CheckForUpdatesAsync();
+        switch (result.Status)
+        {
+            case UpdateCheckStatus.UpToDate:
+                await MessageDialog.ShowAsync("Up to date", "CrossdexBar is already up to date.");
+                break;
+            case UpdateCheckStatus.UpdateAvailable:
+                await MessageDialog.ShowAsync("Update available", $"CrossdexBar {result.Version} has been downloaded. Click OK to restart and finish installing it.");
+                _updateService.ApplyPendingUpdateAndRestart();
+                break;
+            case UpdateCheckStatus.Failed:
+                await MessageDialog.ShowAsync("Update check failed", result.ErrorMessage ?? "Unknown error.");
+                break;
+        }
     }
 
     private void Quit()
