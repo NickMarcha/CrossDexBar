@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using CrossdexBar.App.Update;
 using CrossdexBar.App.ViewModels;
 using CrossdexBar.App.Views;
 using CrossdexBar.Core.Host;
@@ -25,6 +26,7 @@ public partial class App : Application
     private RefreshService _refreshService = null!;
     private TrayPopoverViewModel _popoverViewModel = null!;
     private TrayPopoverWindow? _popoverWindow;
+    private UpdateService _updateService = null!;
 
     public override void Initialize()
     {
@@ -69,6 +71,7 @@ public partial class App : Application
             _instanceStore.Save();
 
         _refreshService = new RefreshService(_registry, new ProcessCliRunner(), new HttpApi(), configStore, _platformPaths);
+        _updateService = new UpdateService("https://github.com/NickMarcha/CrossDexBar");
 
         _popoverViewModel = new TrayPopoverViewModel(_refreshService, OpenSettings, Quit);
         RebuildCards();
@@ -103,9 +106,11 @@ public partial class App : Application
 
         var settingsItem = new NativeMenuItem("Settings...");
         settingsItem.Click += (_, _) => OpenSettings();
+        var checkForUpdatesItem = new NativeMenuItem("Check for updates...");
+        checkForUpdatesItem.Click += (_, _) => _ = _updateService.CheckAndApplyAsync();
         var quitItem = new NativeMenuItem("Quit");
         quitItem.Click += (_, _) => Quit();
-        var menu = new NativeMenu { settingsItem, quitItem };
+        var menu = new NativeMenu { settingsItem, checkForUpdatesItem, quitItem };
 
         var trayIcon = new TrayIcon { Icon = icon, ToolTipText = "CrossdexBar", Menu = menu };
         trayIcon.Clicked += (_, _) => TogglePopover();

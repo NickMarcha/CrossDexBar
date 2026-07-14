@@ -6,13 +6,27 @@ It's a spiritual port of [CodexBar](https://github.com/steipete/CodexBar) (macOS
 
 ## Download
 
-Grab a self-contained build (no .NET install required) from the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases) — `win-x64` for Windows, `linux-x64` for any standard x86_64 Linux distro including CachyOS. Unzip/untar and run the executable directly.
+Grab the latest build from the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases):
+
+- **Windows**: download and run `CrossdexBar-win-Setup.exe`. It installs to your user profile (no admin required) and adds Start Menu/Desktop shortcuts.
+- **Linux**: download `CrossdexBar-linux-*.AppImage`, `chmod +x` it, and run it directly — still no distro package manager involved, so this covers CachyOS the same way as before.
+
+The app checks for updates itself (see "Auto-update" below) — after this install, you shouldn't need to come back to this page again.
+
+### Upgrading from a pre-Velopack release (before v0.1.4)
+
+If you're on `v0.1.2`/`v0.1.3` (the old unzip-and-run `win-x64`/`linux-x64` archives), there's no in-app update path onto the new packaging — those builds have no update-checking code in them at all. Download and run the new installer/AppImage once, the same as a fresh install. Every release from here on updates automatically.
+
+## Auto-update
+
+CrossdexBar packages releases with [Velopack](https://velopack.io) and checks `github.com/NickMarcha/CrossDexBar`'s releases directly — no separate update server. Use the tray icon's **Check for updates...** menu item to check and apply on demand; it downloads the new version and restarts the app if one is available. (There's no automatic background check yet — see `src/CrossdexBar.App/Update/UpdateService.cs`.)
 
 ### Releasing (maintainers)
 
 1. `git tag vX.Y.Z && git push origin vX.Y.Z` — pushing a `v*.*.*` tag is the only trigger; regular pushes to `main` don't release anything.
-2. `.github/workflows/release.yml` runs the full test suite on both `windows-latest` and `ubuntu-latest` first; a GitHub Release with both archives is only created if both pass.
+2. `.github/workflows/release.yml` runs the full test suite on both `windows-latest` and `ubuntu-latest` first; a GitHub Release with both platforms' Velopack packages is only created if both pass. Windows and Linux are packaged as separate Velopack channels (`win`/`linux`) in the same release, uploaded sequentially (not from the parallel build matrix) to avoid two `vpk upload github` calls racing on the same release.
 3. **Tags are immutable once pushed.** If a run fails, you can't fix the code and re-run the same tag — `gh run rerun --failed` replays the exact workflow YAML pinned to that tag's commit, so it won't pick up anything pushed to `main` afterward. Push a new patch tag instead. This isn't hypothetical: the first release attempt was `v0.1.0` (failed — a race condition in `RefreshService` that only reproduced on CI) → `v0.1.1` (failed — the `release` job never checked out the repo, so `gh release create --generate-notes` had no git history) → `v0.1.2` (succeeded). The first two tags still exist on GitHub with no release attached, since their runs failed before the `release` job ever ran.
+4. Unlike the old one-shot `gh release create`, `vpk upload github --publish` can leave a real, partially-populated GitHub Release behind if one channel's upload succeeds and the other fails partway through. Abandoning a tag after a partial failure should also `gh release delete` that release, not just push a new tag.
 
 ## How it works
 
@@ -81,5 +95,6 @@ None of these providers have a documented API — every auth-file shape and endp
 
 - Grok has no confirmed usage-percentage source yet — see the doc comment on `GrokAuthFileStrategy` for what's been investigated (a gRPC-web billing endpoint that turned out not to carry usage data, and a promising `rest/rate-limits` JSON endpoint that wasn't confirmed end-to-end due to lack of a test account).
 - No automatic browser-cookie import (Chrome/Edge DPAPI decryption, Linux keyring handling) — Ollama's cookie field is manual-paste only, by design, since automatic decryption is the most fragile part of both reference apps.
-- No proper installers/distro packages yet (winget manifest, AUR `PKGBUILD`, Flatpak, `.deb`) — the [Releases page](https://github.com/NickMarcha/CrossDexBar/releases) has generic self-contained `win-x64`/`linux-x64` archives (unzip and run), which covers CachyOS since it's a standard x86_64 Arch-based distro, but there's no start-menu/desktop-entry integration or auto-update.
-- Windows builds are unsigned — Windows will show an "unknown publisher" SmartScreen warning until Authenticode signing is set up.
+- No winget manifest, AUR `PKGBUILD`, Flatpak, or `.deb` packaging — Windows now gets a real installer and Linux an AppImage via Velopack (see "Download" above), but neither goes through a distro/OS package manager.
+- No automatic background update check yet — updating requires using the tray icon's "Check for updates..." menu item (see "Auto-update" above).
+- Windows builds are unsigned — Windows will show an "unknown publisher" SmartScreen warning until Authenticode signing is set up. Velopack's installer doesn't change this.
