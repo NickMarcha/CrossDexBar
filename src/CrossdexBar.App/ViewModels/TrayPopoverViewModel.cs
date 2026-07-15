@@ -16,11 +16,14 @@ public sealed partial class TrayPopoverViewModel : ViewModelBase
 
     [ObservableProperty] private string _resetModeGlyph = "⏱";
     [ObservableProperty] private string _resetModeTooltip = "Showing time left until reset — click for reset date";
+    [ObservableProperty] private bool _isPinned;
+    [ObservableProperty] private string _pinTooltip = "Pin window (stay open and on top)";
 
     public IAsyncRelayCommand RefreshAllCommand { get; }
     public IRelayCommand OpenSettingsCommand { get; }
     public IRelayCommand QuitCommand { get; }
     public IRelayCommand ToggleResetModeCommand { get; }
+    public IRelayCommand TogglePinCommand { get; }
 
     public TrayPopoverViewModel(RefreshService refreshService, Action openSettings, Action quit)
     {
@@ -30,6 +33,13 @@ public sealed partial class TrayPopoverViewModel : ViewModelBase
         OpenSettingsCommand = new RelayCommand(openSettings);
         QuitCommand = new RelayCommand(quit);
         ToggleResetModeCommand = new RelayCommand(ToggleResetMode);
+        TogglePinCommand = new RelayCommand(TogglePin);
+    }
+
+    private void TogglePin()
+    {
+        IsPinned = !IsPinned;
+        PinTooltip = IsPinned ? "Unpin window" : "Pin window (stay open and on top)";
     }
 
     public void SetInstances(IEnumerable<(ProviderInstance Instance, ProviderDescriptor Descriptor)> instances)

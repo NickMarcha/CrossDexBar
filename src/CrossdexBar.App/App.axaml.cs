@@ -108,9 +108,11 @@ public partial class App : Application
         settingsItem.Click += (_, _) => OpenSettings();
         var checkForUpdatesItem = new NativeMenuItem("Check for updates...");
         checkForUpdatesItem.Click += (_, _) => _ = CheckForUpdatesAsync();
+        var resetPositionItem = new NativeMenuItem("Reset window position");
+        resetPositionItem.Click += (_, _) => ResetPopoverPosition();
         var quitItem = new NativeMenuItem("Quit");
         quitItem.Click += (_, _) => Quit();
-        var menu = new NativeMenu { settingsItem, checkForUpdatesItem, quitItem };
+        var menu = new NativeMenu { settingsItem, checkForUpdatesItem, resetPositionItem, quitItem };
 
         var trayIcon = new TrayIcon { Icon = icon, ToolTipText = "CrossdexBar", Menu = menu };
         trayIcon.Clicked += (_, _) => TogglePopover();
@@ -130,15 +132,31 @@ public partial class App : Application
         {
             _popoverWindow = new TrayPopoverWindow { DataContext = _popoverViewModel };
             // SizeToContent="Height" only knows the final height after layout runs (i.e. after Show()),
-            // so the precise bottom-right anchor is (re)computed once more from Opened.
-            _popoverWindow.Opened += (_, _) => PositionPopover(_popoverWindow);
+            // so the precise bottom-right anchor is (re)computed once more from Opened — unless the user
+            // has since dragged the window, in which case their chosen position wins.
+            _popoverWindow.Opened += (_, _) =>
+            {
+                if (!_popoverWindow.HasCustomPosition)
+                    PositionPopover(_popoverWindow);
+            };
         }
 
         ConstrainPopoverHeightToScreen(_popoverWindow);
-        PositionPopover(_popoverWindow);
+        if (!_popoverWindow.HasCustomPosition)
+            PositionPopover(_popoverWindow);
         _popoverWindow.Show();
         _popoverWindow.Activate();
         _ = _popoverViewModel.RefreshAllCommand.ExecuteAsync(null);
+    }
+
+    private void ResetPopoverPosition()
+    {
+        if (_popoverWindow is null)
+            return;
+
+        _popoverWindow.ResetCustomPosition();
+        ConstrainPopoverHeightToScreen(_popoverWindow);
+        PositionPopover(_popoverWindow);
     }
 
     private static void ConstrainPopoverHeightToScreen(Window window)
